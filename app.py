@@ -51,11 +51,11 @@ class App(customtkinter.CTk):
         self.create_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Create Template")
         self.create_template_button.grid(row=2, column=0, padx=5, pady=5)
 
-        self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Template")
+        self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Template", command=self.get_templates)
         self.load_template_button.grid(row=3, column=0, padx=5, pady=5)
 
-        self.templates_list_optionmenu = customtkinter.CTkComboBox(master=self.left_menu_frame)
-        self.templates_list_optionmenu.grid(row=4, column=0, padx=5, pady=5)
+        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame)
+        self.templates_list_cb.grid(row=4, column=0, padx=5, pady=5)
 
         # Right frame
         self.text_box_frame = customtkinter.CTkFrame(master=self, width=800)
@@ -65,6 +65,18 @@ class App(customtkinter.CTk):
         self.template_text.pack(expand=True, fill='both')
 
 
+    def get_templates(self):
+        '''
+        Load templates from SES
+        '''
+        templates_list = []
+        response = ses.list_templates()
+        for template in response['TemplatesMetadata']:
+            templates_list.append(template['Name'])
+
+        print(type(templates_list))
+        self.templates_list_cb['values'] = templates_list
+        # return templates_list
 
 if __name__ == "__main__":
     app = App()
