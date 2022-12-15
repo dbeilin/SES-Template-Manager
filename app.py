@@ -2,7 +2,7 @@ import boto3
 # from tkinter import *
 import customtkinter
 
-customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_appearance_mode("Light")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 ###### AWS ######
@@ -42,30 +42,36 @@ class App(customtkinter.CTk):
         self.left_menu_frame = customtkinter.CTkFrame(master=self, width=300)
         self.left_menu_frame.grid(row=1, column=0, padx=5, pady=5, sticky="news")
 
-        self.get_templates_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Get Templates")
-        self.get_templates_button.grid(row=0, column=0, padx=5, pady=5)
-
         self.update_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Update Template")
-        self.update_template_button.grid(row=1, column=0, padx=5, pady=5)
+        self.update_template_button.grid(row=0, column=0, padx=5, pady=5)
 
         self.create_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Create Template")
-        self.create_template_button.grid(row=2, column=0, padx=5, pady=5)
+        self.create_template_button.grid(row=1, column=0, padx=5, pady=5)
 
-        self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Template", command=self.get_templates)
-        self.load_template_button.grid(row=3, column=0, padx=5, pady=5)
+        self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Templates", command=self.get_templates)
+        self.load_template_button.grid(row=2, column=0, padx=5, pady=5)
 
         combobox_var = customtkinter.StringVar()
-        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, state='readonly', values=[''])
-        self.templates_list_cb.grid(row=4, column=0, padx=5, pady=5)
+        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, state='readonly', values=[''], command=self.insert_template)
+        self.templates_list_cb.grid(row=3, column=0, padx=5, pady=5)
 
-        # Right frame
-        self.text_box_frame = customtkinter.CTkFrame(master=self, width=800)
-        self.text_box_frame.grid(row=1, column=1, padx=5, pady=5, sticky="news")
+        # Right frame (Tab View)
+        self.tabView = customtkinter.CTkTabview(self, height=600, width=1025)
+        self.tabView.add("Text")
+        self.tabView.add("HTML")
+        self.tabView.grid(row=1, column=1, padx=5, pady=5, sticky="news")
+        self.tabView.tab("Text").grid_columnconfigure(0, weight=1)
+        self.tabView.tab("HTML").grid_columnconfigure(0, weight=1)
 
-        self.template_text = customtkinter.CTkTextbox(self.text_box_frame, width=1000, height=600)
+        self.template_text = customtkinter.CTkTextbox(master=self.tabView.tab('Text'))
         self.template_text.pack(expand=True, fill='both')
 
-
+        self.template_text_html = customtkinter.CTkTextbox(master=self.tabView.tab('HTML'))
+        self.template_text_html.pack(expand=True, fill='both')
+        # # Bottom frame
+        # self.left_menu_frame = customtkinter.CTkFrame(master=self, height=20)
+        # self.left_menu_frame.grid(row=2, column=1, padx=5, pady=5, sticky="news")
+    
     def get_templates(self):
         '''
         Loads templates from SES service.
@@ -83,6 +89,25 @@ class App(customtkinter.CTk):
 
         self.templates_list_cb.configure(values=templates_list)
         return templates_list
+
+    def insert_template(self, template_name):
+        template_name = self.templates_list_cb.get()
+        response = ses.get_template(TemplateName=template_name)
+
+        self.template_text.delete("0.0", customtkinter.END)
+        self.template_text_html.delete("0.0", customtkinter.END)
+
+        if not 'TextPart' in response['Template'].keys():
+            self.template_text.insert("0.0", "Text part is null")
+        else:
+            self.template_text.insert("0.0", response['Template']['TextPart'])
+
+        if not 'HtmlPart' in response['Template'].keys():
+            self.template_text_html.insert("0.0", "HTML part is null")
+        else:
+            self.template_text_html.insert("0.0", response['Template']['HtmlPart'])
+
+        return response
 
 if __name__ == "__main__":
     app = App()
