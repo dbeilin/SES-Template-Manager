@@ -20,8 +20,6 @@ def get_templates():
     return templates_list
 
 ###### Tkinter ######
-
-## Frames ##
 # Top frame
 top_menu_frame = customtkinter.CTkFrame(master=app, height=40)
 top_menu_frame.grid(row=0, column=1, padx=5, pady=5, sticky="news")
@@ -54,14 +52,14 @@ get_templates_button.grid(row=0, column=0, padx=5, pady=5)
 update_template_button = customtkinter.CTkButton(master=left_menu_frame, text="Update Template")
 update_template_button.grid(row=1, column=0, padx=5, pady=5)
 
-load_template_button = customtkinter.CTkButton(master=left_menu_frame, text="Load Template")
-load_template_button.grid(row=2, column=0, padx=5, pady=5)
-
 create_template_button = customtkinter.CTkButton(master=left_menu_frame, text="Create Template")
-create_template_button.grid(row=3, column=0, padx=5, pady=5)
+create_template_button.grid(row=2, column=0, padx=5, pady=5)
 
-templates_list_combobox = customtkinter.CTkComboBox(master=left_menu_frame, values=get_templates())
-templates_list_combobox.grid(row=4, column=0, padx=5, pady=5)
+load_template_button = customtkinter.CTkButton(master=left_menu_frame, text="Load Template", command=get_templates)
+load_template_button.grid(row=3, column=0, padx=5, pady=5)
+
+templates_list_optionmenu = customtkinter.CTkComboBox(master=left_menu_frame)
+templates_list_optionmenu.grid(row=4, column=0, padx=5, pady=5)
 
 # Right frame
 text_box_frame = customtkinter.CTkFrame(master=app, width=800)
@@ -69,6 +67,5 @@ text_box_frame.grid(row=1, column=1, padx=5, pady=5, sticky="news")
 
 template_text = customtkinter.CTkTextbox(text_box_frame, width=1000, height=600)
 template_text.pack(expand=True, fill='both')
-
 
 app.mainloop()
