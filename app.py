@@ -68,6 +68,7 @@ class App(customtkinter.CTk):
 
         self.template_text_html = customtkinter.CTkTextbox(master=self.tabView.tab('HTML'))
         self.template_text_html.pack(expand=True, fill='both')
+        
         # # Bottom frame
         # self.left_menu_frame = customtkinter.CTkFrame(master=self, height=20)
         # self.left_menu_frame.grid(row=2, column=1, padx=5, pady=5, sticky="news")
@@ -91,17 +92,24 @@ class App(customtkinter.CTk):
         return templates_list
 
     def insert_template(self, template_name):
+        '''
+        Insert contents of chosen template to the text box
+        both in HTML and Text (if exists).
+        '''
         template_name = self.templates_list_cb.get()
         response = ses.get_template(TemplateName=template_name)
 
+        # Always clear text when switching between templates
         self.template_text.delete("0.0", customtkinter.END)
         self.template_text_html.delete("0.0", customtkinter.END)
 
+        # Template text part
         if not 'TextPart' in response['Template'].keys():
             self.template_text.insert("0.0", "Text part is null")
         else:
             self.template_text.insert("0.0", response['Template']['TextPart'])
 
+        # Template HTML part
         if not 'HtmlPart' in response['Template'].keys():
             self.template_text_html.insert("0.0", "HTML part is null")
         else:
