@@ -54,7 +54,8 @@ class App(customtkinter.CTk):
         self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Template", command=self.get_templates)
         self.load_template_button.grid(row=3, column=0, padx=5, pady=5)
 
-        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame)
+        combobox_var = customtkinter.StringVar()
+        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, state='readonly', values=[''])
         self.templates_list_cb.grid(row=4, column=0, padx=5, pady=5)
 
         # Right frame
@@ -67,16 +68,21 @@ class App(customtkinter.CTk):
 
     def get_templates(self):
         '''
-        Load templates from SES
+        Loads templates from SES service.
+        Prints all templates and lists them
+        inside the ComboBox.
         '''
         templates_list = []
         response = ses.list_templates()
         for template in response['TemplatesMetadata']:
             templates_list.append(template['Name'])
 
-        print(type(templates_list))
-        self.templates_list_cb['values'] = templates_list
-        # return templates_list
+        print(f"Found {len(templates_list)} Templates:")
+        for t in templates_list:
+            print(t)
+
+        self.templates_list_cb.configure(values=templates_list)
+        return templates_list
 
 if __name__ == "__main__":
     app = App()
