@@ -6,9 +6,10 @@ import customtkinter
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
-###### AWS ######
+# AWS
 ses = boto3.client('ses')
 
+# Custom Tkinter
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -48,8 +49,8 @@ class App(customtkinter.CTk):
         self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Templates", command=self.get_templates)
         self.load_template_button.grid(row=2, column=0, padx=5, pady=5)
 
-        combobox_var = customtkinter.StringVar()
-        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, values=[''], command=self.insert_template)
+        self.combobox_var = customtkinter.StringVar()
+        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=self.combobox_var, values=[''], command=self.insert_template)
         self.templates_list_cb.grid(row=3, column=0, padx=5, pady=5)
 
         self.delete_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Delete Template", command=self.open_delete_window)
