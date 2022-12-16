@@ -1,8 +1,9 @@
 import boto3
 import botocore.exceptions
+import tkinter as tk
 import customtkinter
 
-customtkinter.set_appearance_mode("Light")
+customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
 ###### AWS ######
@@ -15,6 +16,8 @@ class App(customtkinter.CTk):
         # configure window
         self.title("SES Template Manager")
         self.geometry(f"{1210}x{700}")
+        icon = tk.PhotoImage(file = "icon.png")
+        self.wm_iconphoto(True, icon)
 
         # Top frame (Template name and subject)
         self.top_menu_frame = customtkinter.CTkFrame(master=self, height=40)
@@ -46,7 +49,7 @@ class App(customtkinter.CTk):
         self.load_template_button.grid(row=2, column=0, padx=5, pady=5)
 
         combobox_var = customtkinter.StringVar()
-        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, state='readonly', values=[''], command=self.insert_template)
+        self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, values=[''], command=self.insert_template)
         self.templates_list_cb.grid(row=3, column=0, padx=5, pady=5)
 
         self.delete_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Delete Template", command=self.open_delete_window)
@@ -187,12 +190,12 @@ class App(customtkinter.CTk):
     def delete_template(self):
         try:
             response = ses.delete_template(
-                TemplateName=self.template_name.get()
+                TemplateName=self.templates_list_cb.get()
             )
             self.get_templates() # Update ComboBox
-            self.status_lbl.configure(text=f"Template {self.template_name.get()} was deleted successfully", text_color="green")
+            self.status_lbl.configure(text=f"Template {self.templates_list_cb.get()} was deleted successfully", text_color="green")
             return response
-        
+
         except Exception as e:
             self.status_lbl.configure(text=f"Error deleting the template", text_color="red")
             print(e)
