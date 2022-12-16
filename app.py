@@ -55,7 +55,7 @@ class App(customtkinter.CTk):
         self.left_menu_frame = customtkinter.CTkFrame(master=self, width=300)
         self.left_menu_frame.grid(row=1, column=0, padx=5, pady=5, sticky="news")
 
-        self.update_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Update Template")
+        self.update_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Update Template", command=self.update_template)
         self.update_template_button.grid(row=0, column=0, padx=5, pady=5)
 
         self.create_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Create Template", command=self.create_template)
@@ -104,39 +104,42 @@ class App(customtkinter.CTk):
         self.templates_list_cb.configure(values=templates_list)
         return templates_list
 
-    def insert_template(self, template_name):
+    def insert_template(self, *args):
         '''
         Insert contents of chosen template to the text box
         both in HTML and Text (if exists).
         '''
-        template_name = self.templates_list_cb.get()
-        response = ses.get_template(TemplateName=template_name)
+        try:
+            response = ses.get_template(TemplateName=self.templates_list_cb.get())
 
-        # Always clear text when switching between templates
-        self.template_text.delete("0.0", customtkinter.END)
-        self.template_text_html.delete("0.0", customtkinter.END)
-        self.template_subject.delete(0, customtkinter.END)
-        self.template_name.delete(0, customtkinter.END)
-        
-        # Template name part
-        self.template_name.insert(0, response['Template']['TemplateName'])
+            # Always clear text when switching between templates
+            self.template_text.delete("0.0", customtkinter.END)
+            self.template_text_html.delete("0.0", customtkinter.END)
+            self.template_subject.delete(0, customtkinter.END)
+            self.template_name.delete(0, customtkinter.END)
+            
+            # Template name part
+            self.template_name.insert(0, response['Template']['TemplateName'])
 
-        # Teplate subject part
-        self.template_subject.insert(0, response['Template']['SubjectPart'])
+            # Teplate subject part
+            self.template_subject.insert(0, response['Template']['SubjectPart'])
 
-        # Template text part
-        if not 'TextPart' in response['Template'].keys():
-            self.template_text.insert("0.0", "Text part is null")
-        else:
-            self.template_text.insert("0.0", response['Template']['TextPart'])
+            # Template text part
+            if not 'TextPart' in response['Template'].keys():
+                self.template_text.insert("0.0", "Text part is null")
+            else:
+                self.template_text.insert("0.0", response['Template']['TextPart'])
 
-        # Template HTML part
-        if not 'HtmlPart' in response['Template'].keys():
-            self.template_text_html.insert("0.0", "HTML part is null")
-        else:
-            self.template_text_html.insert("0.0", response['Template']['HtmlPart'])
+            # Template HTML part
+            if not 'HtmlPart' in response['Template'].keys():
+                self.template_text_html.insert("0.0", "HTML part is null")
+            else:
+                self.template_text_html.insert("0.0", response['Template']['HtmlPart'])
 
-        return response
+            return response
+
+        except Exception as e:
+            print("Error inserting data from template into widgets:\n", e)
 
     def create_template(self):
         try:
@@ -147,7 +150,8 @@ class App(customtkinter.CTk):
                     'TextPart': self.template_text.get("0.0", customtkinter.END),
                     'HtmlPart': self.template_text_html.get("0.0", customtkinter.END)
                 })
-            print(f"Successfully created the template {self.template_name.get()}.")
+            print("Successfully created the template", self.template_name.get())
+            self.get_templates()
             return response
 
         except ses.exceptions.AlreadyExistsException:
@@ -155,6 +159,25 @@ class App(customtkinter.CTk):
 
         except ses.exceptions.InvalidTemplateException:
             print("Invalid template exception")
+
+        except Exception as e:
+            print("Error creating template:", e)
+
+    def update_template(self):
+        try:
+            response = ses.update_template(
+                Template={
+                    'TemplateName': self.template_name.get(),
+                    'SubjectPart': self.template_subject.get(),
+                    'TextPart': self.template_text.get("0.0", customtkinter.END),
+                    'HtmlPart': self.template_text_html.get("0.0", customtkinter.END)
+                })
+
+            print("Successfully updated the template", self.template_name.get())
+            return response
+
+        except ses.exceptions.TemplateDoesNotExistException:
+            print("Template does not exist")
 
         except Exception as e:
             print("Error creating template:", e)
