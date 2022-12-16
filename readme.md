@@ -1,6 +1,8 @@
-![banner](https://i.imgur.com/iFbczhY.png)
-# SES Template Manager
+<p align="center">
+  <img src="https://i.imgur.com/iFbczhY.png">
+</p>
 
+# SES Template Manager
 Recently I was working on sending emails using AWS SES. What I love about SES is the option to use templated emails, which allows to easily populate variables inside of the message.
 
 I saw that the SES Console doesn't offer a web-UI for managing my templates, you have to use the CLI. While it was ok at first I quickly grew tired of updating or creating my templates that way, so I wrote a simple GUI app in Python to do just that.
@@ -28,6 +30,7 @@ I saw that the SES Console doesn't offer a web-UI for managing my templates, you
 
 ### Load Existing Templates
 Clicking on "Load Templates" will populate the ComboBox below it with your existing templates
+
 ![load templates example](https://i.imgur.com/kNIFzsq.png)
 
 ### Modifying Templates
