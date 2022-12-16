@@ -1,4 +1,5 @@
 import boto3
+import botocore.exceptions
 # from tkinter import *
 import customtkinter
 
@@ -18,25 +19,37 @@ class App(customtkinter.CTk):
 
         # Top frame
         self.top_menu_frame = customtkinter.CTkFrame(master=self, height=40)
+        self.top_menu_frame.grid_rowconfigure(0, weight=0)
+        self.top_menu_frame.grid_columnconfigure(1, weight=3)
         self.top_menu_frame.grid(row=0, column=1, padx=5, pady=5, sticky="news")
 
-        self.aws_id = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Access Key ID")
-        self.aws_id.grid(row=0, column=0, padx=5, pady=5)
-        self.aws_id_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
-        self.aws_id_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.template_name_lbl = customtkinter.CTkLabel(master=self.top_menu_frame, text="Template Name:", width=50)
+        self.template_name_lbl.grid(row=0, column=0, padx=5, pady=5)
+        self.template_name = customtkinter.CTkEntry(master=self.top_menu_frame, placeholder_text="Template Name", width=400)
+        self.template_name.grid(row=0, column=1, padx=5, pady=5)
 
-        self.aws_key = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Secret Access Key")
-        self.aws_key.grid(row=0, column=2, padx=5, pady=5)
-        self.aws_key_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35, show="*")
-        self.aws_key_entry.grid(row=0, column=3, padx=5, pady=5)
+        self.template_subject_lbl = customtkinter.CTkLabel(master=self.top_menu_frame, text="Template Subject:", width=50)
+        self.template_subject_lbl.grid(row=0, column=2, padx=5, pady=5)
+        self.template_subject = customtkinter.CTkEntry(master=self.top_menu_frame, placeholder_text="Template Subject", width=400)
+        self.template_subject.grid(row=0, column=3, padx=5, pady=5)
 
-        self.aws_region = customtkinter.CTkLabel(master=self.top_menu_frame, text="Region")
-        self.aws_region.grid(row=0, column=4, padx=5, pady=5)
-        self.aws_region_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
-        self.aws_region_entry.grid(row=0, column=5, padx=5, pady=5)
+        # self.aws_id = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Access Key ID")
+        # self.aws_id.grid(row=0, column=0, padx=5, pady=5)
+        # self.aws_id_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
+        # self.aws_id_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        self.load_aws_creds = customtkinter.CTkButton(master=self.top_menu_frame, text="Load")
-        self.load_aws_creds.grid(row=0, column=6, padx=5, pady=5)
+        # self.aws_key = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Secret Access Key")
+        # self.aws_key.grid(row=0, column=2, padx=5, pady=5)
+        # self.aws_key_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35, show="*")
+        # self.aws_key_entry.grid(row=0, column=3, padx=5, pady=5)
+
+        # self.aws_region = customtkinter.CTkLabel(master=self.top_menu_frame, text="Region")
+        # self.aws_region.grid(row=0, column=4, padx=5, pady=5)
+        # self.aws_region_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
+        # self.aws_region_entry.grid(row=0, column=5, padx=5, pady=5)
+
+        # self.load_aws_creds = customtkinter.CTkButton(master=self.top_menu_frame, text="Load")
+        # self.load_aws_creds.grid(row=0, column=6, padx=5, pady=5)
 
         # Left frame
         self.left_menu_frame = customtkinter.CTkFrame(master=self, width=300)
@@ -45,7 +58,7 @@ class App(customtkinter.CTk):
         self.update_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Update Template")
         self.update_template_button.grid(row=0, column=0, padx=5, pady=5)
 
-        self.create_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Create Template")
+        self.create_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Create Template", command=self.create_template)
         self.create_template_button.grid(row=1, column=0, padx=5, pady=5)
 
         self.load_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Load Templates", command=self.get_templates)
@@ -102,6 +115,14 @@ class App(customtkinter.CTk):
         # Always clear text when switching between templates
         self.template_text.delete("0.0", customtkinter.END)
         self.template_text_html.delete("0.0", customtkinter.END)
+        self.template_subject.delete(0, customtkinter.END)
+        self.template_name.delete(0, customtkinter.END)
+        
+        # Template name part
+        self.template_name.insert(0, response['Template']['TemplateName'])
+
+        # Teplate subject part
+        self.template_subject.insert(0, response['Template']['SubjectPart'])
 
         # Template text part
         if not 'TextPart' in response['Template'].keys():
@@ -116,6 +137,27 @@ class App(customtkinter.CTk):
             self.template_text_html.insert("0.0", response['Template']['HtmlPart'])
 
         return response
+
+    def create_template(self):
+        try:
+            response = ses.create_template(
+                Template={
+                    'TemplateName': self.template_name.get(),
+                    'SubjectPart': self.template_subject.get(),
+                    'TextPart': self.template_text.get("0.0", customtkinter.END),
+                    'HtmlPart': self.template_text_html.get("0.0", customtkinter.END)
+                })
+            print(f"Successfully created the template {self.template_name.get()}.")
+            return response
+
+        except ses.exceptions.AlreadyExistsException:
+            print("A template with this name already exists")
+
+        except ses.exceptions.InvalidTemplateException:
+            print("Invalid template exception")
+
+        except Exception as e:
+            print("Error creating template:", e)
 
 if __name__ == "__main__":
     app = App()
