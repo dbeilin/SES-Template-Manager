@@ -17,7 +17,7 @@ class App(customtkinter.CTk):
         # configure window
         self.title("SES Template Manager")
         self.geometry(f"{1210}x{700}")
-        icon = tk.PhotoImage(file = "icon.png")
+        icon = tk.PhotoImage(file = "app-icon.png")
         self.wm_iconphoto(True, icon)
 
         # Top frame (Template name and subject)
