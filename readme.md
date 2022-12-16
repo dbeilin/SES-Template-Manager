@@ -1,3 +1,4 @@
+![banner](https://i.imgur.com/iFbczhY.png)
 # SES Template Manager
 
 Recently I was working on sending emails using AWS SES. What I love about SES is the option to use templated emails, which allows to easily populate variables inside of the message.
