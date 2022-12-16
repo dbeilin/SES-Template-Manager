@@ -1,10 +1,9 @@
 import boto3
 import botocore.exceptions
-# from tkinter import *
 import customtkinter
 
-customtkinter.set_appearance_mode("Light")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+customtkinter.set_appearance_mode("Light")
+customtkinter.set_default_color_theme("blue")
 
 ###### AWS ######
 ses = boto3.client('ses')
@@ -15,9 +14,9 @@ class App(customtkinter.CTk):
 
         # configure window
         self.title("SES Template Manager")
-        self.geometry(f"{1200}x{700}")
+        self.geometry(f"{1210}x{700}")
 
-        # Top frame
+        # Top frame (Template name and subject)
         self.top_menu_frame = customtkinter.CTkFrame(master=self, height=40)
         self.top_menu_frame.grid_rowconfigure(0, weight=0)
         self.top_menu_frame.grid_columnconfigure(1, weight=3)
@@ -32,24 +31,6 @@ class App(customtkinter.CTk):
         self.template_subject_lbl.grid(row=0, column=2, padx=5, pady=5)
         self.template_subject = customtkinter.CTkEntry(master=self.top_menu_frame, placeholder_text="Template Subject", width=400)
         self.template_subject.grid(row=0, column=3, padx=5, pady=5)
-
-        # self.aws_id = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Access Key ID")
-        # self.aws_id.grid(row=0, column=0, padx=5, pady=5)
-        # self.aws_id_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
-        # self.aws_id_entry.grid(row=0, column=1, padx=5, pady=5)
-
-        # self.aws_key = customtkinter.CTkLabel(master=self.top_menu_frame, text="AWS Secret Access Key")
-        # self.aws_key.grid(row=0, column=2, padx=5, pady=5)
-        # self.aws_key_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35, show="*")
-        # self.aws_key_entry.grid(row=0, column=3, padx=5, pady=5)
-
-        # self.aws_region = customtkinter.CTkLabel(master=self.top_menu_frame, text="Region")
-        # self.aws_region.grid(row=0, column=4, padx=5, pady=5)
-        # self.aws_region_entry = customtkinter.CTkEntry(self.top_menu_frame, width=150, height=35)
-        # self.aws_region_entry.grid(row=0, column=5, padx=5, pady=5)
-
-        # self.load_aws_creds = customtkinter.CTkButton(master=self.top_menu_frame, text="Load")
-        # self.load_aws_creds.grid(row=0, column=6, padx=5, pady=5)
 
         # Left frame
         self.left_menu_frame = customtkinter.CTkFrame(master=self, width=300)
@@ -68,6 +49,9 @@ class App(customtkinter.CTk):
         self.templates_list_cb = customtkinter.CTkComboBox(master=self.left_menu_frame, variable=combobox_var, state='readonly', values=[''], command=self.insert_template)
         self.templates_list_cb.grid(row=3, column=0, padx=5, pady=5)
 
+        self.delete_template_button = customtkinter.CTkButton(master=self.left_menu_frame, text="Delete Template", command=self.open_delete_window)
+        self.delete_template_button.grid(row=4, column=0, padx=5, pady=5)
+
         # Right frame (Tab View)
         self.tabView = customtkinter.CTkTabview(self, height=600, width=1025)
         self.tabView.add("Text")
@@ -81,29 +65,38 @@ class App(customtkinter.CTk):
 
         self.template_text_html = customtkinter.CTkTextbox(master=self.tabView.tab('HTML'))
         self.template_text_html.pack(expand=True, fill='both')
-        
-        # # Bottom frame
-        # self.left_menu_frame = customtkinter.CTkFrame(master=self, height=20)
-        # self.left_menu_frame.grid(row=2, column=1, padx=5, pady=5, sticky="news")
-    
+
+        # Bottom frame
+        self.bottom_frame = customtkinter.CTkFrame(master=self, width=300, height=5)
+        self.bottom_frame.grid_rowconfigure(0, weight=0)
+        self.bottom_frame.grid(row=2, column=1, padx=7, pady=3, sticky="news")
+
+        self.status_lbl = customtkinter.CTkLabel(master=self.bottom_frame, text="Idle", width=50)
+        self.status_lbl.grid(row=0, column=0, padx=5, pady=3, sticky="news")
+
     def get_templates(self):
         '''
         Loads templates from SES service.
         Prints all templates and lists them
         inside the ComboBox.
         '''
-        templates_list = []
-        response = ses.list_templates()
-        for template in response['TemplatesMetadata']:
-            templates_list.append(template['Name'])
+        try:
+            templates_list = []
+            response = ses.list_templates()
+            for template in response['TemplatesMetadata']:
+                templates_list.append(template['Name'])
 
-        print(f"Found {len(templates_list)} Templates:")
-        for t in templates_list:
-            print(t)
+            print(f"Found {len(templates_list)} Templates:")
+            for t in templates_list:
+                print(t)
 
-        self.templates_list_cb.configure(values=templates_list)
-        return templates_list
+            self.status_lbl.configure(text=f"Found {len(templates_list)} Templates", text_color="green")
+            self.templates_list_cb.configure(values=templates_list)
+            return templates_list
 
+        except Exception as e:
+            print("Error getting templates:\n", e)
+    
     def insert_template(self, *args):
         '''
         Insert contents of chosen template to the text box
@@ -124,22 +117,28 @@ class App(customtkinter.CTk):
             # Teplate subject part
             self.template_subject.insert(0, response['Template']['SubjectPart'])
 
+            '''
+            Templates can be created without both the text and HTML parts filled in,
+            we avoid the exception of not finding the appropriate key in case either
+            the text or HTML part are missing.
+            '''
             # Template text part
             if not 'TextPart' in response['Template'].keys():
-                self.template_text.insert("0.0", "Text part is null")
+                self.template_text.insert("0.0", "")
             else:
                 self.template_text.insert("0.0", response['Template']['TextPart'])
 
             # Template HTML part
             if not 'HtmlPart' in response['Template'].keys():
-                self.template_text_html.insert("0.0", "HTML part is null")
+                self.template_text_html.insert("0.0", "")
             else:
                 self.template_text_html.insert("0.0", response['Template']['HtmlPart'])
 
             return response
 
         except Exception as e:
-            print("Error inserting data from template into widgets:\n", e)
+            self.status_lbl.configure(text=f"Error inserting data from template into widgets", text_color="red")
+            print(e)
 
     def create_template(self):
         try:
@@ -150,18 +149,20 @@ class App(customtkinter.CTk):
                     'TextPart': self.template_text.get("0.0", customtkinter.END),
                     'HtmlPart': self.template_text_html.get("0.0", customtkinter.END)
                 })
-            print("Successfully created the template", self.template_name.get())
-            self.get_templates()
+
+            self.get_templates() # Reload ComboBox values
+            self.status_lbl.configure(text=f"Successfully created the template {self.template_name.get()}", text_color="green")
             return response
 
         except ses.exceptions.AlreadyExistsException:
-            print("A template with this name already exists")
+            self.status_lbl.configure(text=f"A template with this name already exists", text_color="red")
 
         except ses.exceptions.InvalidTemplateException:
-            print("Invalid template exception")
+            self.status_lbl.configure(text=f"Invalid template exception", text_color="red")
 
         except Exception as e:
-            print("Error creating template:", e)
+            self.status_lbl.configure(text=f"Error creating template", text_color="red")
+            print(e)
 
     def update_template(self):
         try:
@@ -173,14 +174,44 @@ class App(customtkinter.CTk):
                     'HtmlPart': self.template_text_html.get("0.0", customtkinter.END)
                 })
 
-            print("Successfully updated the template", self.template_name.get())
+            self.status_lbl.configure(text=f"Successfully updated the template {self.template_name.get()}", text_color="green")
             return response
 
         except ses.exceptions.TemplateDoesNotExistException:
-            print("Template does not exist")
+            self.status_lbl.configure(text=f"Template does not exist", text_color="red")
 
         except Exception as e:
-            print("Error creating template:", e)
+            self.status_lbl.configure(text=f"Error updating template", text_color="red")
+            print(e)
+    
+    def delete_template(self):
+        try:
+            response = ses.delete_template(
+                TemplateName=self.template_name.get()
+            )
+            self.get_templates() # Update ComboBox
+            self.status_lbl.configure(text=f"Template {self.template_name.get()} was deleted successfully", text_color="green")
+            return response
+        
+        except Exception as e:
+            self.status_lbl.configure(text=f"Error deleting the template", text_color="red")
+            print(e)
+    
+    def open_delete_window(self):
+        '''
+        Deletes a chosen template and opens another
+        window to confirm the delete action.
+        '''
+        confirm_delete_window = customtkinter.CTkToplevel(self)
+        confirm_delete_window.geometry("400x200")
+        confirm_delete_window.title("Delete Template")
+
+        # create label on CTkToplevel window
+        confirm_delete_lbl = customtkinter.CTkLabel(confirm_delete_window, text=f"Are you sure you want to delete template {self.templates_list_cb.get()}?")
+        confirm_delete_lbl.pack(side="top", fill="both", expand=True, padx=40, pady=40)
+
+        confirm_delete_button = customtkinter.CTkButton(master=confirm_delete_window, text="Yes", command=self.delete_template, fg_color="red", hover_color="red")
+        confirm_delete_button.pack(side="top", fill="both", padx=20, pady=10)
 
 if __name__ == "__main__":
     app = App()
