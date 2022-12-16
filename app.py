@@ -207,7 +207,7 @@ class App(customtkinter.CTk):
         window to confirm the delete action.
         '''
         confirm_delete_window = customtkinter.CTkToplevel(self)
-        confirm_delete_window.geometry("300x200")
+        confirm_delete_window.geometry("400x200")
         confirm_delete_window.title("Delete Template")
 
         # create label on CTkToplevel window
